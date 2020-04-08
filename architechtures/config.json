@@ -1,0 +1,16 @@
+{
+  "arch": {
+    "neurons": 32,
+    "rnn": "LSTM",
+    "drop": 0.0,
+    "nlayers": 3,
+    "activation": "tanh",
+    "activation_r": "hard_sigmoid"
+  },
+  "training": {
+    "batch": 500,
+    "epochs": 25,
+    "optimizer": "adam",
+    "lrate": 0.001
+  }
+}
