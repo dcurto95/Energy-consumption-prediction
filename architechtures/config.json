@@ -1,4 +1,5 @@
 {
+  "test_name": "test1",
   "arch": {
     "neurons": 32,
     "rnn": "LSTM",
@@ -9,7 +10,7 @@
   },
   "training": {
     "batch": 500,
-    "epochs": 25,
+    "epochs": 1,
     "optimizer": "adam",
     "lrate": 0.001
   }

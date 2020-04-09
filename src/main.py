@@ -1,3 +1,5 @@
+import datetime
+import time
 from sys import argv
 
 import pandas as pd
@@ -5,6 +7,7 @@ from pandas._libs import json
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
+import plot
 import preprocessing
 import rnn
 
@@ -30,6 +33,7 @@ def load_config_file(nfile, abspath=False):
 
 
 if __name__ == '__main__':
+    since = time.time()
     fpath = '../hourly-energy-consumption/PJME_hourly.csv'
 
     dataframe = pd.read_csv(fpath)
@@ -39,14 +43,16 @@ if __name__ == '__main__':
     preprocessing.separate_datetime(dataframe)
 
     print(dataframe.head())
-    data = dataframe.to_numpy()
-    data = data.reshape((data.shape[0], data.shape[1], 1))
-    train, test = train_test_split(data, test_size=0.2, shuffle=False)
-    validation, test = train_test_split(test, test_size=0.5, shuffle=False)
+    data_x = dataframe.iloc[:, :-1].to_numpy()
+    data_x = data_x.reshape((data_x.shape[0], data_x.shape[1], 1))
+    data_y = dataframe.iloc[:, -1].to_numpy()
 
-    train_x, train_y = train[:, :-1, :], train[:, -1, :]
-    validation_x, validation_y = validation[:, :-1, :], validation[:, -1, :]
-    test_x, test_y = test[:, :-1, :], test[:, -1, :]
+    train_x, test_x, train_y, test_y = train_test_split(data_x, data_y, test_size=0.2, shuffle=False)
+    validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
+
+    # train_x, train_y = train[:, :-1, :], train[:, -1, :]
+    # validation_x, validation_y = validation[:, :-1, :], validation[:, -1, :]
+    # test_x, test_y = test[:, :-1, :], test[:, -1, :]
 
     model = rnn.create_model((train_x.shape[1], train_x.shape[2]),
                              neurons=config['arch']['neurons'],
@@ -73,8 +79,19 @@ if __name__ == '__main__':
     print()
     print('MSE test= ', score)
     print('MSE test persistence =', mean_squared_error(test_y[ahead:], test_y[0:-ahead]))
-    test_yp = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
-    r2test = r2_score(test_y, test_yp)
-    r2pers = r2_score(test_y[ahead:, 0], test_y[0:-ahead, 0])
+
+    prediction = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
+    print("Predicted:", prediction)
+
+    r2test = r2_score(test_y, prediction)
+    r2pers = r2_score(test_y[ahead:], test_y[0:-ahead])
     print('R2 test= ', r2test)
     print('R2 test persistence =', r2pers)
+
+    print("\nExecution time:", time.time() - since)
+
+    test_x = test_x.reshape((test_x.shape[0], test_x.shape[1]))
+    test_x = [str(datetime.datetime(year=x[0], month=x[1], day=x[2], hour=x[3], minute=x[4], second=x[5])) for x in
+              test_x]
+    plot.multiple_line_plot([test_x, test_x], [test_y, prediction], ['Truth', 'Prediction'], config['test_name'],
+                            title="Prediction vs. Truth")

@@ -1,3 +1,4 @@
 .idea/*
 hourly-energy-consumption/*
 src/__pycache__/*
+logs/*
