@@ -56,7 +56,7 @@ if __name__ == '__main__':
     # Plot after normalizing data
     #plot.plot_consumption(dataframe)
     # preprocessing.separate_datetime(dataframe)
-    preprocessing.extract_features_from_datetime(dataframe)
+    dataframe = preprocessing.extract_features_from_datetime(dataframe)
 
     print(dataframe.head())
     sequence_length = 6
@@ -116,7 +116,7 @@ if __name__ == '__main__':
         print("\nExecution time:", time.time() - since, "s")
         errors.append((score, r2test, time.time() - since))
         x_values = np.reshape(test_x, (test_x.shape[0], test_x.shape[1]))
-        x_values = [str(datetime.datetime(year=x[0], month=x[1], day=x[2], hour=x[3], minute=x[4], second=x[5])) for x
+        x_values = [str(datetime.datetime(year=x[3], month=x[2], day=x[1], hour=x[0])) for x
                     in x_values]
 
         plot.multiple_line_plot([x_values, x_values],
