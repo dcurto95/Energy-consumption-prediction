@@ -49,3 +49,11 @@ def draw_history(history, folder, test_name):
     plt.savefig('../logs/' + folder + '/Loss_' + test_name + '.jpg')
 
     plt.close('all')
+
+
+def plot_consumption(dataframe):
+    dataframe.plot(figsize=(16, 4), legend=True)
+
+    plt.title('DOM hourly power consumption data ')
+
+    plt.show()
