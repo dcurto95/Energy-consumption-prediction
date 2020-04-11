@@ -51,14 +51,15 @@ if __name__ == '__main__':
 
     preprocessing.fix_missing_values(dataframe)
     # Plot before normalizing data
-    plot.plot_consumption(dataframe)
+    #plot.plot_consumption(dataframe)
     preprocessing.normalize_data(dataframe)
     # Plot after normalizing data
-    plot.plot_consumption(dataframe)
+    #plot.plot_consumption(dataframe)
     # preprocessing.separate_datetime(dataframe)
     preprocessing.extract_features_from_datetime(dataframe)
 
     print(dataframe.head())
+    sequence_length = 6
     data_x = dataframe.iloc[:, :-1].to_numpy()
     data_x = data_x.reshape((data_x.shape[0], data_x.shape[1], 1))
     data_y = dataframe.iloc[:, -1].to_numpy()
@@ -82,8 +83,7 @@ if __name__ == '__main__':
                                  dense_layers=config['arch']['dense_layers'],
                                  activation=config['arch']['activation'],
                                  activation_r=config['arch']['activation_r'],
-                                 rnntype=config['arch']['rnn'],
-                                 impl=2)
+                                 rnntype=config['arch']['rnn'])
 
         optimizer = config['training']['optimizer']
         lr = config['training']['lrate']
