@@ -1,7 +1,10 @@
 import datetime
+import os
 import time
+from shutil import copyfile
 from sys import argv
 
+import numpy as np
 import pandas as pd
 from pandas._libs import json
 from sklearn.metrics import mean_squared_error, r2_score
@@ -33,11 +36,18 @@ def load_config_file(nfile, abspath=False):
 
 
 if __name__ == '__main__':
-    since = time.time()
+    best_error = float('inf')
+    best_config = 0
+
+    errors = []
     fpath = '../hourly-energy-consumption/PJME_hourly.csv'
 
     dataframe = pd.read_csv(fpath)
     config = load_config_file(argv[1])
+
+    if not os.path.exists('../logs/' + config['test_name']):
+        os.mkdir('../logs/' + config['test_name'])
+    copyfile(argv[1], '../logs/' + config['test_name'] + "/config.json")
 
     preprocessing.fix_missing_values(dataframe)
     preprocessing.separate_datetime(dataframe)
@@ -46,52 +56,80 @@ if __name__ == '__main__':
     data_x = dataframe.iloc[:, :-1].to_numpy()
     data_x = data_x.reshape((data_x.shape[0], data_x.shape[1], 1))
     data_y = dataframe.iloc[:, -1].to_numpy()
+    data_y = data_y.reshape((data_y.shape[0], 1))
 
     train_x, test_x, train_y, test_y = train_test_split(data_x, data_y, test_size=0.2, shuffle=False)
     validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
 
-    # train_x, train_y = train[:, :-1, :], train[:, -1, :]
-    # validation_x, validation_y = validation[:, :-1, :], validation[:, -1, :]
-    # test_x, test_y = test[:, :-1, :], test[:, -1, :]
+    for i in range(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step']):
+        if i == 0:
+            i = 1
 
-    model = rnn.create_model((train_x.shape[1], train_x.shape[2]),
-                             neurons=config['arch']['neurons'],
-                             drop=config['arch']['drop'],
-                             nlayers=config['arch']['nlayers'],
-                             activation=config['arch']['activation'],
-                             activation_r=config['arch']['activation_r'],
-                             rnntype=config['arch']['rnn'],
-                             impl=2)
+        config[config['tunning_parameter']['from']][config['tunning_parameter']['name']] = i
+        since = time.time()
 
-    optimizer = config['training']['optimizer']
-    lr = config['training']['lrate']
-    batch_size = config['training']['batch']
-    epochs = config['training']['epochs']
+        model = rnn.create_model((train_x.shape[1], train_x.shape[2]),
+                                 neurons=config['arch']['neurons'],
+                                 neurons_increase=config['arch']['neurons_increase'],
+                                 drop=config['arch']['drop'],
+                                 rnn_layers=config['arch']['rnn_layers'],
+                                 dense_layers=config['arch']['dense_layers'],
+                                 activation=config['arch']['activation'],
+                                 activation_r=config['arch']['activation_r'],
+                                 rnntype=config['arch']['rnn'],
+                                 impl=2)
 
-    rnn.compile(model, optimizer, lr)
+        optimizer = config['training']['optimizer']
+        lr = config['training']['lrate']
+        batch_size = config['training']['batch']
+        epochs = config['training']['epochs']
 
-    rnn.fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y, verbose=1)
+        rnn.compile(model, optimizer, lr)
 
-    score = rnn.evaluate(model, test_x, test_y, batch_size)
+        history = rnn.fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y, verbose=1)
 
-    ahead = 1
+        score = rnn.evaluate(model, test_x, test_y, batch_size)
 
-    print()
-    print('MSE test= ', score)
-    print('MSE test persistence =', mean_squared_error(test_y[ahead:], test_y[0:-ahead]))
+        ahead = 1
 
-    prediction = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
-    print("Predicted:", prediction)
+        if score < best_error:
+            best_error = score
+            best_config = i
+        print()
+        print('MSE test= ', score)
+        print('MSE test persistence =', mean_squared_error(test_y[ahead:], test_y[0:-ahead]))
 
-    r2test = r2_score(test_y, prediction)
-    r2pers = r2_score(test_y[ahead:], test_y[0:-ahead])
-    print('R2 test= ', r2test)
-    print('R2 test persistence =', r2pers)
+        prediction = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
+        print("Predicted:", prediction)
 
-    print("\nExecution time:", time.time() - since)
+        r2test = r2_score(test_y, prediction)
+        r2pers = r2_score(test_y[ahead:], test_y[0:-ahead])
+        print('R2 test= ', r2test)
+        print('R2 test persistence =', r2pers)
 
-    test_x = test_x.reshape((test_x.shape[0], test_x.shape[1]))
-    test_x = [str(datetime.datetime(year=x[0], month=x[1], day=x[2], hour=x[3], minute=x[4], second=x[5])) for x in
-              test_x]
-    plot.multiple_line_plot([test_x, test_x], [test_y, prediction], ['Truth', 'Prediction'], config['test_name'],
-                            title="Prediction vs. Truth")
+        print("\nExecution time:", time.time() - since, "s")
+        errors.append((score, r2test, time.time() - since))
+        x_values = np.reshape(test_x, (test_x.shape[0], test_x.shape[1]))
+        x_values = [str(datetime.datetime(year=x[0], month=x[1], day=x[2], hour=x[3], minute=x[4], second=x[5])) for x
+                    in x_values]
+
+        plot.multiple_line_plot([x_values, x_values],
+                                [test_y, prediction],
+                                ['Truth', 'Prediction'],
+                                config['tunning_parameter']['name'] + "=" + str(i) + "-pred_vs_truth",
+                                folder=config['test_name'],
+                                title="Prediction vs. Truth")
+        plot.draw_history(history, config['test_name'], config['tunning_parameter']['name'] + "=" + str(i))
+
+    print("\n\n", errors)
+    print("Best:\nNum. Layers:", best_config, "\n", errors[best_config - 1])
+
+    x_values = np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])
+    x_values[0] = 1
+
+    errors = np.asarray(errors)
+    plot.multiple_line_plot([x_values, x_values],
+                            [errors[:, 0], errors[:, 1]],
+                            ['MSE', 'R2'],
+                            config['test_name'] + "/Parameter=" + config['tunning_parameter']['name'] + "-Loss",
+                            title="Parameters configuration Loss")

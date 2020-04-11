@@ -1,16 +1,24 @@
 {
-  "test_name": "test1",
+  "test_name": "Increasing_SimpleRNN",
+  "tunning_parameter": {
+    "from": "arch",
+    "name": "rnn_layers",
+    "max_value": 2,
+    "step": 1
+  },
   "arch": {
     "neurons": 32,
-    "rnn": "LSTM",
-    "drop": 0.0,
-    "nlayers": 3,
+    "neurons_increase": 2,
+    "rnn": "SimpleRNN",
+    "drop": 0.1,
+    "rnn_layers": 1,
+    "dense_layers": 1,
     "activation": "tanh",
     "activation_r": "hard_sigmoid"
   },
   "training": {
-    "batch": 500,
-    "epochs": 1,
+    "batch": 5000,
+    "epochs": 25,
     "optimizer": "adam",
     "lrate": 0.001
   }
