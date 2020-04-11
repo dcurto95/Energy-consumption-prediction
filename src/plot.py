@@ -27,3 +27,10 @@ def multiple_line_plot(x_list, y_list, labels, test_name, title=''):
     plt.savefig(
         ("../logs/" + test_name + "-pred_vs_truth.png"))
     plt.close()
+
+def plot_consumption(dataframe):
+    dataframe.plot(figsize=(16, 4), legend=True)
+
+    plt.title('DOM hourly power consumption data ')
+
+    plt.show()

@@ -37,10 +37,16 @@ if __name__ == '__main__':
     fpath = '../hourly-energy-consumption/PJME_hourly.csv'
 
     dataframe = pd.read_csv(fpath)
-    config = load_config_file(argv[1])
+    config = load_config_file(argv[1], abspath=True)
 
     preprocessing.fix_missing_values(dataframe)
-    preprocessing.separate_datetime(dataframe)
+    #Plot before normalizing data
+    plot.plot_consumption(dataframe)
+    preprocessing.normalize_data(dataframe)
+    #Plot after normalizing data
+    plot.plot_consumption(dataframe)
+    #preprocessing.separate_datetime(dataframe)
+    preprocessing.extract_features_from_datetime(dataframe)
 
     print(dataframe.head())
     data_x = dataframe.iloc[:, :-1].to_numpy()
