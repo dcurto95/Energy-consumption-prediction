@@ -67,7 +67,8 @@ if __name__ == '__main__':
     train_x, test_x, train_y, test_y = train_test_split(data_x, data_y, test_size=0.2, shuffle=False)
     validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
 
-    for i in range(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step']):
+    for loop, i in enumerate(
+            np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])):
         if i == 0:
             i = 1
 
@@ -99,7 +100,7 @@ if __name__ == '__main__':
 
         if score < best_error:
             best_error = score
-            best_config = i
+            best_config = loop
         print()
         print('MSE test= ', score)
         print('MSE test persistence =', mean_squared_error(test_y[ahead:], test_y[0:-ahead]))
@@ -123,7 +124,7 @@ if __name__ == '__main__':
                                 ['Truth', 'Prediction'],
                                 config['tunning_parameter']['name'] + "=" + str(i) + "-pred_vs_truth",
                                 folder=config['test_name'],
-                                title="Prediction vs. Truth")
+                                title="Prediction vs. Truth", figsize=10)
         plot.draw_history(history, config['test_name'], config['tunning_parameter']['name'] + "=" + str(i))
 
     print("\n\n", errors)
@@ -137,4 +138,5 @@ if __name__ == '__main__':
                             [errors[:, 0], errors[:, 1]],
                             ['MSE', 'R2'],
                             config['test_name'] + "/Parameter=" + config['tunning_parameter']['name'] + "-Loss",
-                            title="Parameters configuration Loss")
+                            title="Parameters configuration Loss",
+                            figsize=10)

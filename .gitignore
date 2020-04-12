@@ -2,3 +2,4 @@
 hourly-energy-consumption/*
 src/__pycache__/*
 logs/*
+src/test.py 

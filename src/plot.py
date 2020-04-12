@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def multiple_line_plot(x_list, y_list, labels, file_name, folder='.', title=''):
+def multiple_line_plot(x_list, y_list, labels, file_name, folder='.', title='', figsize=20):
     # plot the data
-    fig = plt.figure(figsize=(20, 20))
+    fig = plt.figure(figsize=(figsize, figsize))
     ax = fig.add_subplot(1, 1, 1)
     x_event_list = []
     y_event_list = []
