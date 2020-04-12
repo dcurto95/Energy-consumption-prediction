@@ -1,9 +1,9 @@
 {
-  "test_name": "Increasing_SimpleLayers",
+  "test_name": "Increasing_Window",
   "tunning_parameter": {
     "from": "arch",
-    "name": "rnn_layers",
-    "max_value": 10,
+    "name": "window_size",
+    "max_value": 20,
     "step": 1
   },
   "arch": {
@@ -11,10 +11,11 @@
     "neurons_increase": 2,
     "rnn": "SimpleRNN",
     "drop": 0.0,
-    "rnn_layers": 1,
+    "rnn_layers": 2,
     "dense_layers": 1,
     "activation": "tanh",
-    "activation_r": "hard_sigmoid"
+    "activation_r": "hard_sigmoid",
+    "window_size": 2
   },
   "training": {
     "batch": 1000,

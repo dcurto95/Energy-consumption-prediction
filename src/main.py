@@ -36,14 +36,13 @@ def load_config_file(nfile, abspath=False):
 
 
 def sequence_data(data, seq_len):
-    # Define lookback period and split inputs/labels
-    lookback = 2
     X = np.zeros((len(data) - seq_len, seq_len, data.shape[1]))
     y = np.zeros(len(data) - seq_len)
 
+    data = data.to_numpy()
     for i in range(seq_len, len(data)):
-        X[i - seq_len] = data.iloc[i - seq_len:i]
-        y[i - seq_len] = data.iloc[i, 0]
+        X[i - seq_len] = data[i - seq_len:i]
+        y[i - seq_len] = data[i, 0]
     X = X.reshape(-1, seq_len, data.shape[1])
     y = y.reshape(-1, 1)
 
@@ -68,23 +67,23 @@ if __name__ == '__main__':
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
     scaler, dataframe = preprocessing.normalize_minmax(dataframe)
 
-    sequence_length = 2
-    X, y = sequence_data(dataframe, sequence_length)
-
-    train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.2, shuffle=False)
-    validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
-    
-    print('X_train.shape = ', train_x.shape)
-    print('y_train.shape = ', train_y.shape)
-    print('X_test.shape = ', test_x.shape)
-    print('y_test.shape = ', test_y.shape)
-
     for loop, i in enumerate(
             np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])):
         if i == 0:
             i = 1
 
         config[config['tunning_parameter']['from']][config['tunning_parameter']['name']] = i
+
+        X, y = sequence_data(dataframe, config['arch']['window_size'])
+
+        train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.2, shuffle=False)
+        validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
+
+        print('X_train.shape = ', train_x.shape)
+        print('y_train.shape = ', train_y.shape)
+        print('X_test.shape = ', test_x.shape)
+        print('y_test.shape = ', test_y.shape)
+
         since = time.time()
 
         model = rnn.create_model((train_x.shape[1], train_x.shape[2]),
@@ -102,10 +101,10 @@ if __name__ == '__main__':
         batch_size = config['training']['batch']
         epochs = config['training']['epochs']
 
-        optimizer = "adam"
-        epochs = 10
-        batch_size = 1000
-        model = rnn.kaggle_model((train_x.shape[1], train_x.shape[2]))
+        # optimizer = "adam"
+        # epochs = 10
+        # batch_size = 1000
+        # model = rnn.kaggle_model((train_x.shape[1], train_x.shape[2]))
 
         rnn.compile(model, optimizer, lr)
 
@@ -136,11 +135,10 @@ if __name__ == '__main__':
         print("\nExecution time:", time.time() - since, "s")
         errors.append((score, r2test, time.time() - since))
 
-        plot.plot_prediction(prediction, test_y)
+        # plot.plot_prediction(prediction, test_y)
 
-        x_values = np.reshape(test_x, (test_x.shape[0], test_x.shape[1]))
-        x_values = [str(datetime.datetime(year=x[3], month=x[2], day=x[1], hour=x[0])) for x
-                    in x_values]
+        x_values = np.reshape(test_x[:, -1, 1:], (test_x.shape[0], test_x.shape[2] - 1)).astype(np.intc)
+        x_values = [str(datetime.datetime(year=x[3], month=x[2], day=x[1], hour=x[0])) for x in x_values]
 
         plot.multiple_line_plot([x_values, x_values],
                                 [test_y, prediction],
