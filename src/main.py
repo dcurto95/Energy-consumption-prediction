@@ -63,19 +63,16 @@ if __name__ == '__main__':
 
     preprocessing.fix_missing_values(dataframe)
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
+    train_x, test_x, train_y, test_y = train_test_split(dataframe.iloc[:,1:], dataframe.iloc[:,0], test_size=0.2, shuffle=False)
+    validation_x, test_without_norm, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
+
     scaler, data = preprocessing.normalize_minmax(dataframe)
+
     sequence_length = 2
-    #train_x, test_x, train_y, test_y = preprocessing.convert_data(dataframe)
     X, y = sequence_data(data, dataframe, sequence_length)
 
     train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.2, shuffle=False)
     validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
-
-
-    print('X_train.shape = ', train_x.shape)
-    print('y_train.shape = ', train_y.shape)
-    print('X_test.shape = ', test_x.shape)
-    print('y_test.shape = ', test_y.shape)
 
     for i in range(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step']):
         if i == 0:
@@ -99,10 +96,6 @@ if __name__ == '__main__':
         batch_size = config['training']['batch']
         epochs = config['training']['epochs']
 
-        optimizer = "adam"
-        epochs = 10
-        batch_size = 1000
-        model = rnn.kaggle_model((train_x.shape[1], train_x.shape[2]))
 
         rnn.compile(model, optimizer, lr)
 
@@ -120,13 +113,12 @@ if __name__ == '__main__':
         print('MSE test= ', score)
         print('MSE test persistence =', mean_squared_error(test_y[ahead:], test_y[0:-ahead]))
 
-        #prediction = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
-        prediction = model.predict(test_x, batch_size=batch_size, verbose=0)
+        prediction = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
         print("Predicted:", prediction)
 
         prediction = preprocessing.inverse_minmax(prediction,scaler)
         test_y = preprocessing.inverse_minmax(test_y,scaler)
-
+        print('Real MSE =', mean_squared_error(test_y, prediction))
 
         r2test = r2_score(test_y, prediction)
         r2pers = r2_score(test_y[ahead:], test_y[0:-ahead])
@@ -138,10 +130,8 @@ if __name__ == '__main__':
 
         plot.plot_prediction(prediction,test_y)
 
-        x_values = np.reshape(test_x, (test_x.shape[0], test_x.shape[1]))
-        x_values = [str(datetime.datetime(year=x[3], month=x[2], day=x[1], hour=x[0])) for x
-                    in x_values]
-
+        x_values = np.reshape(test_x[:, -1, 1:], (test_x.shape[0], test_x.shape[2] - 1)).astype(np.intc)
+        x_values = [str(datetime.datetime(year=x[3], month=x[2], day=x[1], hour=x[0])) for x in x_values]
         plot.multiple_line_plot([x_values, x_values],
                                 [test_y, prediction],
                                 ['Truth', 'Prediction'],

@@ -54,6 +54,9 @@ def normalize_minmax(dataframe):
     #dataframe["PJME_MW"] = scaler.transform(dataframe.iloc[:, 0].values.reshape(-1, 1))
     return scaler, data
 
+def inverse_scaling(data, scaler):
+    data_rescaled = scaler.inverse_transform(data)
+    return data_rescaled
 
 def inverse_minmax(column, scaler):
     scale = MinMaxScaler()
