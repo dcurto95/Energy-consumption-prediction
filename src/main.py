@@ -3,13 +3,10 @@ import os
 import time
 from shutil import copyfile
 from sys import argv
-
 import numpy as np
 import pandas as pd
 from pandas._libs import json
-from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-
 import plot
 import preprocessing
 import rnn
@@ -111,17 +108,13 @@ if __name__ == '__main__':
             best_config = i
         print()
         print('MSE test= ', score)
-        print('MSE test persistence =', mean_squared_error(test_y[ahead:], test_y[0:-ahead]))
 
         prediction = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
-        print("Predicted:", prediction)
 
         prediction = preprocessing.inverse_minmax(prediction, scaler)
         test_y = preprocessing.inverse_minmax(test_y, scaler)
 
         real_mse, mape, r2test = metrics.compute_print_scores(prediction, test_y)
-        r2pers = r2_score(test_y[ahead:], test_y[0:-ahead])
-        print('R2 test persistence =', r2pers)
 
         print("\nExecution time:", time.time() - since, "s")
         errors.append((score, r2test, time.time() - since))
