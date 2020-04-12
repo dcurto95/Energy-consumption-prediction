@@ -35,20 +35,6 @@ def load_config_file(nfile, abspath=False):
     return json.loads(s)
 
 
-def sequence_data(data, seq_len):
-    X = np.zeros((len(data) - seq_len, seq_len, data.shape[1]))
-    y = np.zeros(len(data) - seq_len)
-
-    data = data.to_numpy()
-    for i in range(seq_len, len(data)):
-        X[i - seq_len] = data[i - seq_len:i]
-        y[i - seq_len] = data[i, 0]
-    X = X.reshape(-1, seq_len, data.shape[1])
-    y = y.reshape(-1, 1)
-
-    return X, y
-
-
 if __name__ == '__main__':
     best_error = float('inf')
     best_config = 0
@@ -65,7 +51,10 @@ if __name__ == '__main__':
 
     preprocessing.fix_missing_values(dataframe)
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
-    scaler, dataframe = preprocessing.normalize_minmax(dataframe)
+
+    test_without_norm = dataframe.to_numpy()[int(dataframe.shape[0] * 0.9):, 1:]
+
+    scaler, data = preprocessing.normalize_minmax(dataframe)
 
     for loop, i in enumerate(
             np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])):
@@ -74,7 +63,7 @@ if __name__ == '__main__':
 
         config[config['tunning_parameter']['from']][config['tunning_parameter']['name']] = i
 
-        X, y = sequence_data(dataframe, config['arch']['window_size'])
+        X, y = preprocessing.sequence_data(data, config['arch']['window_size'])
 
         train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.2, shuffle=False)
         validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
@@ -101,14 +90,10 @@ if __name__ == '__main__':
         batch_size = config['training']['batch']
         epochs = config['training']['epochs']
 
-        # optimizer = "adam"
-        # epochs = 10
-        # batch_size = 1000
-        # model = rnn.kaggle_model((train_x.shape[1], train_x.shape[2]))
-
         rnn.compile(model, optimizer, lr)
 
         history = rnn.fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y, verbose=1)
+        # history = rnn.fit_no_validation(model, train_x, train_y, batch_size, epochs, verbose=1)
 
         score = rnn.evaluate(model, test_x, test_y, batch_size)
 
@@ -126,6 +111,7 @@ if __name__ == '__main__':
 
         prediction = preprocessing.inverse_minmax(prediction, scaler)
         test_y = preprocessing.inverse_minmax(test_y, scaler)
+        print('Real MSE =', mean_squared_error(test_y, prediction))
 
         r2test = r2_score(test_y, prediction)
         r2pers = r2_score(test_y[ahead:], test_y[0:-ahead])
@@ -137,7 +123,7 @@ if __name__ == '__main__':
 
         # plot.plot_prediction(prediction, test_y)
 
-        x_values = np.reshape(test_x[:, -1, 1:], (test_x.shape[0], test_x.shape[2] - 1)).astype(np.intc)
+        x_values = test_without_norm.astype(np.intc)
         x_values = [str(datetime.datetime(year=x[3], month=x[2], day=x[1], hour=x[0])) for x in x_values]
 
         plot.multiple_line_plot([x_values, x_values],
