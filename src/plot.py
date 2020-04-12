@@ -60,9 +60,8 @@ def plot_consumption(dataframe):
 
 def plot_prediction(gt,pred):
     plt.figure(figsize=(15, 6))
-    test_Y = list(map(lambda x: x * scalar + min_value, test_Y))
-    predicted = list(map(lambda x: x * scalar + min_value, predicted))
-    plt.plot(test_Y[0:1000], 'b', linewidth=2.5, linestyle="-", label='real')
-    plt.plot(predicted[0:1000], 'r', linewidth=2.5, linestyle="-", label='prediction')
+    plt.plot(gt[0:1000], 'b', linewidth=2.5, linestyle="-", label='real')
+    plt.plot(pred[0:1000], 'r', linewidth=2.5, linestyle="-", label='prediction')
     plt.legend(loc='best')
+    plt.show()
 

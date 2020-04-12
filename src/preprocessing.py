@@ -49,10 +49,10 @@ def normalize_zscore(dataframe):
 
 def normalize_minmax(dataframe):
     scaler = MinMaxScaler()
-    #data = scaler.fit_transform(dataframe.values)
+    data = scaler.fit_transform(dataframe.values)
     scaler.fit(dataframe.iloc[:, 0].values.reshape(-1, 1))
-    dataframe["PJME_MW"] = scaler.transform(dataframe.iloc[:, 0].values.reshape(-1, 1))
-    return scaler, dataframe
+    #dataframe["PJME_MW"] = scaler.transform(dataframe.iloc[:, 0].values.reshape(-1, 1))
+    return scaler, data
 
 
 def inverse_minmax(column, scaler):

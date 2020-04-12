@@ -34,21 +34,17 @@ def load_config_file(nfile, abspath=False):
 
     return json.loads(s)
 
-def sequence_data(data, seq_len):
-    # Define lookback period and split inputs/labels
-    lookback = 2
-    X = np.zeros((len(data) - seq_len, seq_len, data.shape[1]))
+def sequence_data(data, dataframe, seq_len):
+    X = np.zeros((len(data) - seq_len, seq_len, dataframe.shape[1]))
     y = np.zeros(len(data) - seq_len)
 
-
     for i in range(seq_len, len(data)):
-        X[i - seq_len] = data.iloc[i - seq_len:i]
-        y[i - seq_len] = data.iloc[i, 0]
-    X = X.reshape(-1, seq_len, data.shape[1])
+        X[i - seq_len] = data[i - seq_len:i]
+        y[i - seq_len] = data[i, 0]
+    X = X.reshape(-1, seq_len, dataframe.shape[1])
     y = y.reshape(-1, 1)
 
     return X,y
-
 
 
 if __name__ == '__main__':
@@ -67,10 +63,10 @@ if __name__ == '__main__':
 
     preprocessing.fix_missing_values(dataframe)
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
-    scaler, dataframe = preprocessing.normalize_minmax(dataframe)
-
+    scaler, data = preprocessing.normalize_minmax(dataframe)
     sequence_length = 2
-    X, y = sequence_data(dataframe, sequence_length)
+    #train_x, test_x, train_y, test_y = preprocessing.convert_data(dataframe)
+    X, y = sequence_data(data, dataframe, sequence_length)
 
     train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.2, shuffle=False)
     validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
@@ -110,7 +106,8 @@ if __name__ == '__main__':
 
         rnn.compile(model, optimizer, lr)
 
-        history = rnn.fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y, verbose=1)
+        #history = rnn.fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y, verbose=1)
+        history = rnn.fit_no_validation(model, train_x, train_y, batch_size, epochs, verbose=1)
 
         score = rnn.evaluate(model, test_x, test_y, batch_size)
 
@@ -123,11 +120,13 @@ if __name__ == '__main__':
         print('MSE test= ', score)
         print('MSE test persistence =', mean_squared_error(test_y[ahead:], test_y[0:-ahead]))
 
-        prediction = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
+        #prediction = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
+        prediction = model.predict(test_x, batch_size=batch_size, verbose=0)
         print("Predicted:", prediction)
 
         prediction = preprocessing.inverse_minmax(prediction,scaler)
         test_y = preprocessing.inverse_minmax(test_y,scaler)
+
 
         r2test = r2_score(test_y, prediction)
         r2pers = r2_score(test_y[ahead:], test_y[0:-ahead])
