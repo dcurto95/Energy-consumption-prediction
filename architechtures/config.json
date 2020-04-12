@@ -1,10 +1,10 @@
 {
-  "test_name": "Increasing_epochs(2)",
+  "test_name": "Increasing_SimpleLayers",
   "tunning_parameter": {
-    "from": "training",
-    "name": "epochs",
-    "max_value": 200,
-    "step": 10
+    "from": "arch",
+    "name": "rnn_layers",
+    "max_value": 10,
+    "step": 1
   },
   "arch": {
     "neurons": 32,
@@ -17,8 +17,8 @@
     "activation_r": "hard_sigmoid"
   },
   "training": {
-    "batch": 5000,
-    "epochs": 25,
+    "batch": 1000,
+    "epochs": 100,
     "optimizer": "adam",
     "lrate": 0.001
   }
