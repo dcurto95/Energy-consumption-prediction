@@ -101,8 +101,6 @@ if __name__ == '__main__':
 
         score = rnn.evaluate(model, test_x, test_y, batch_size)
 
-        ahead = 1
-
         if score < best_error:
             best_error = score
             best_config = i
