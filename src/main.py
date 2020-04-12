@@ -52,10 +52,6 @@ if __name__ == '__main__':
     preprocessing.fix_missing_values(dataframe)
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
 
-    _, test_x, _, test_y = train_test_split(dataframe.to_numpy()[:, 1:], dataframe.to_numpy()[:, 0],
-                                                        test_size=0.2, shuffle=False)
-    _, test_without_norm, _, _ = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
-
     scaler, data = preprocessing.normalize_minmax(dataframe)
 
     for loop, i in enumerate(
@@ -66,6 +62,12 @@ if __name__ == '__main__':
         config[config['tunning_parameter']['from']][config['tunning_parameter']['name']] = i
 
         X, y = preprocessing.sequence_data(data, config['arch']['window_size'])
+        # test_without_norm = dataframe.to_numpy()[int((dataframe.shape[0] - config['arch']['window_size']) * 0.9):, 1:]
+
+        _, a, _, b = train_test_split(dataframe.to_numpy()[config['arch']['window_size']:, 1:],
+                                      dataframe.to_numpy()[config['arch']['window_size']:, 0], test_size=0.2,
+                                      shuffle=False)
+        _, test_without_norm, _, _ = train_test_split(a, b, test_size=0.5, shuffle=False)
 
         train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.2, shuffle=False)
         validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
