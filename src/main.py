@@ -52,7 +52,9 @@ if __name__ == '__main__':
     preprocessing.fix_missing_values(dataframe)
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
 
-    test_without_norm = dataframe.to_numpy()[int(dataframe.shape[0] * 0.9):, 1:]
+    _, test_x, _, test_y = train_test_split(dataframe.to_numpy()[:, 1:], dataframe.to_numpy()[:, 0],
+                                                        test_size=0.2, shuffle=False)
+    _, test_without_norm, _, _ = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
 
     scaler, data = preprocessing.normalize_minmax(dataframe)
 
