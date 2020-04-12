@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 import plot
 import preprocessing
 import rnn
+import metrics
 
 
 def load_config_file(nfile, abspath=False):
@@ -63,7 +64,7 @@ if __name__ == '__main__':
 
     preprocessing.fix_missing_values(dataframe)
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
-    train_x, test_x, train_y, test_y = train_test_split(dataframe.iloc[:,1:], dataframe.iloc[:,0], test_size=0.2, shuffle=False)
+    train_x, test_x, train_y, test_y = train_test_split(dataframe.iloc[:,1:], dataframe.iloc[:, 0], test_size=0.2, shuffle=False)
     validation_x, test_without_norm, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
 
     scaler, data = preprocessing.normalize_minmax(dataframe)
@@ -99,8 +100,7 @@ if __name__ == '__main__':
 
         rnn.compile(model, optimizer, lr)
 
-        #history = rnn.fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y, verbose=1)
-        history = rnn.fit_no_validation(model, train_x, train_y, batch_size, epochs, verbose=1)
+        history = rnn.fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y, verbose=1)
 
         score = rnn.evaluate(model, test_x, test_y, batch_size)
 
@@ -116,13 +116,11 @@ if __name__ == '__main__':
         prediction = model.predict(test_x, batch_size=config['training']['batch'], verbose=0)
         print("Predicted:", prediction)
 
-        prediction = preprocessing.inverse_minmax(prediction,scaler)
-        test_y = preprocessing.inverse_minmax(test_y,scaler)
-        print('Real MSE =', mean_squared_error(test_y, prediction))
+        prediction = preprocessing.inverse_minmax(prediction, scaler)
+        test_y = preprocessing.inverse_minmax(test_y, scaler)
 
-        r2test = r2_score(test_y, prediction)
+        real_mse, mape, r2test = metrics.compute_print_scores(prediction, test_y)
         r2pers = r2_score(test_y[ahead:], test_y[0:-ahead])
-        print('R2 test= ', r2test)
         print('R2 test persistence =', r2pers)
 
         print("\nExecution time:", time.time() - since, "s")

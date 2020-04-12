@@ -18,7 +18,7 @@
   },
   "training": {
     "batch": 1000,
-    "epochs": 100,
+    "epochs": 10,
     "optimizer": "adam",
     "lrate": 0.001
   }
