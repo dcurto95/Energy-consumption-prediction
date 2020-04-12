@@ -66,6 +66,11 @@ def fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y,
                      validation_data=(validation_x, validation_y),
                      verbose=verbose)
 
+def fit_no_validation(model, train_x, train_y, batch_size, epochs, verbose=0):
+    return model.fit(train_x, train_y, batch_size=batch_size,
+                     epochs=epochs,
+                     verbose=verbose)
+
 
 def evaluate(model, test_x, test_y, batch_size):
     return model.evaluate(test_x, test_y, batch_size=batch_size, verbose=0)
