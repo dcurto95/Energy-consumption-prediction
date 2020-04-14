@@ -1,7 +1,8 @@
 from datetime import datetime
+
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-import numpy as np
 
 
 def fix_missing_values(dataframe):
@@ -35,7 +36,6 @@ def extract_features_from_datetime(dataframe):
 
     dataframe.drop(columns=["Datetime"], inplace=True)
 
-
     # columns = list(dataframe.columns)
     # columns.append(columns.pop(columns.index("PJME_MW")))
     # return dataframe.reindex(columns=columns)
@@ -47,20 +47,23 @@ def normalize_zscore(dataframe):
     scaler = StandardScaler()
     dataframe["PJME_MW"] = scaler.fit_transform(dataframe["PJME_MW"].values.reshape(-1, 1))
 
+
 def normalize_minmax(dataframe):
     scaler = MinMaxScaler()
     data = scaler.fit_transform(dataframe.values)
     scaler.fit(dataframe.iloc[:, 0].values.reshape(-1, 1))
-    #dataframe["PJME_MW"] = scaler.transform(dataframe.iloc[:, 0].values.reshape(-1, 1))
+    # dataframe["PJME_MW"] = scaler.transform(dataframe.iloc[:, 0].values.reshape(-1, 1))
     return scaler, data
+
 
 def inverse_scaling(data, scaler):
     data_rescaled = scaler.inverse_transform(data)
     return data_rescaled
 
+
 def inverse_minmax(column, scaler):
     scale = MinMaxScaler()
-    scale.min_,scale.scale_ = scaler.min_[0], scaler.scale_[0]
+    scale.min_, scale.scale_ = scaler.min_[0], scaler.scale_[0]
     rescaled = scale.inverse_transform(column)
     return rescaled
 
@@ -74,7 +77,6 @@ def convert_data(dataframe):
     label_sc.fit(dataframe.iloc[:, 0].values.reshape(-1, 1))
     label_scalers = label_sc
 
-
     # Define lookback period and split inputs/labels
     lookback = 2
     inputs = np.zeros((len(data) - lookback, lookback, dataframe.shape[1]))
@@ -87,7 +89,7 @@ def convert_data(dataframe):
     labels = labels.reshape(-1, 1)
 
     # Split data into train/test portions and combining all data from different files into a single array
-    test_portion = int(0.1*len(inputs))
+    test_portion = int(0.1 * len(inputs))
 
     train_x = inputs[:-test_portion]
     train_y = labels[:-test_portion]
@@ -95,5 +97,18 @@ def convert_data(dataframe):
     test_x = (inputs[-test_portion:])
     test_y = (labels[-test_portion:])
 
+    return train_x, test_x, train_y, test_y
 
-    return train_x,test_x,train_y,test_y
+
+def sequence_data(data, seq_len):
+    X = np.zeros((len(data) - seq_len, seq_len, data.shape[1]))
+    y = np.zeros(len(data) - seq_len)
+
+    for i in range(seq_len, len(data)):
+        X[i - seq_len] = data[i - seq_len:i]
+        y[i - seq_len] = data[i, 0]
+
+    X = X.reshape((-1, seq_len, data.shape[1]))
+    y = y.reshape((-1, 1))
+
+    return X, y
