@@ -105,7 +105,6 @@ if __name__ == '__main__':
         rnn.compile(model, optimizer, lr)
 
         history = rnn.fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y, verbose=1)
-        # history = rnn.fit_no_validation(model, train_x, train_y, batch_size, epochs, verbose=1)
 
         score = rnn.evaluate(model, test_x, test_y, batch_size)
 
