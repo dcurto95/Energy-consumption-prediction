@@ -67,39 +67,6 @@ def inverse_minmax(column, scaler):
     rescaled = scale.inverse_transform(column)
     return rescaled
 
-
-def convert_data(dataframe):
-    # Scaling the input data
-    scaler = MinMaxScaler()
-    label_sc = MinMaxScaler()
-    data = scaler.fit_transform(dataframe.values)
-    # Obtaining the Scale for the labels(usage data) so that output can be re-scaled to actual value during evaluation
-    label_sc.fit(dataframe.iloc[:, 0].values.reshape(-1, 1))
-    label_scalers = label_sc
-
-    # Define lookback period and split inputs/labels
-    lookback = 2
-    inputs = np.zeros((len(data) - lookback, lookback, dataframe.shape[1]))
-    labels = np.zeros(len(data) - lookback)
-
-    for i in range(lookback, len(data)):
-        inputs[i - lookback] = data[i - lookback:i]
-        labels[i - lookback] = data[i, 0]
-    inputs = inputs.reshape(-1, lookback, dataframe.shape[1])
-    labels = labels.reshape(-1, 1)
-
-    # Split data into train/test portions and combining all data from different files into a single array
-    test_portion = int(0.1 * len(inputs))
-
-    train_x = inputs[:-test_portion]
-    train_y = labels[:-test_portion]
-
-    test_x = (inputs[-test_portion:])
-    test_y = (labels[-test_portion:])
-
-    return train_x, test_x, train_y, test_y
-
-
 def sequence_data(data, seq_len):
     X = np.zeros((len(data) - seq_len, seq_len, data.shape[1]))
     y = np.zeros(len(data) - seq_len)

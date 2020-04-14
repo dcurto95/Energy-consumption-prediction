@@ -3,7 +3,7 @@
   "tunning_parameter": {
     "from": "arch",
     "name": "rnn_layers",
-    "max_value": 20,
+    "max_value": 1,
     "step": 1
   },
   "arch": {
@@ -19,7 +19,7 @@
   },
   "training": {
     "batch": 1000,
-    "epochs": 200,
+    "epochs": 2,
     "optimizer": "adam",
     "lrate": 0.001
   }
