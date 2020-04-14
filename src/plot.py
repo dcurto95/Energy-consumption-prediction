@@ -4,20 +4,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def multiple_line_plot(x_list, y_list, labels, file_name, folder='.', title='', figsize=20):
+def multiple_line_plot(x_list, y_list, labels, file_name, folder='.', title='', figsize=(20, 20)):
     # plot the data
-    fig = plt.figure(figsize=(figsize, figsize))
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(1, 1, 1)
-    x_event_list = []
-    y_event_list = []
 
     for x, y, color, label in zip(x_list, y_list, mcolors.TABLEAU_COLORS, labels):
         ax.plot(x, y, color=color, label=label)
 
-    # add the events to the axis
-    for x_event, y_event in zip(x_event_list, y_event_list):
-        ax.add_collection(x_event)
-        ax.add_collection(y_event)
     if len(x_list[0]) > 10:
         indices = np.arange(0, len(x_list[0]), len(x_list[0]) // 10)
     else:
@@ -65,3 +59,27 @@ def plot_prediction(gt, pred):
     plt.plot(pred[0:1000], 'r', linewidth=2.5, linestyle="-", label='prediction')
     plt.legend(loc='best')
     plt.show()
+
+
+def line_subplot(x_list, y_list, labels, subplots, file_name, folder='.', title='', figsize=(20, 20)):
+    # plot the data
+    fig = plt.figure(figsize=figsize)
+
+    if len(x_list[0]) > 10:
+        indices = np.arange(0, len(x_list[0]), len(x_list[0]) // 10)
+    else:
+        indices = np.arange(0, len(x_list[0]))
+
+    for i, (x, y, color, label) in enumerate(zip(x_list, y_list, mcolors.TABLEAU_COLORS, labels)):
+        ax = fig.add_subplot(subplots[0], subplots[1], i + 1)
+        ax.plot(x, y, color=color)
+
+        ax.set_xticks(np.asarray(x_list[0])[indices].tolist())
+        ax.set_xticklabels(np.asarray(x_list[0])[indices].tolist())
+        ax.grid(True)
+
+        ax.set_title(label)
+    plt.suptitle(title)
+    plt.savefig(
+        ("../logs/" + folder + "/" + file_name + ".png"))
+    plt.close()

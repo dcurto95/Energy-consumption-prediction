@@ -1,17 +1,17 @@
 {
-  "test_name": "Increasing_Window",
+  "test_name": "Increasing_GRU_Layers",
   "tunning_parameter": {
     "from": "arch",
-    "name": "window_size",
+    "name": "rnn_layers",
     "max_value": 20,
     "step": 1
   },
   "arch": {
     "neurons": 32,
     "neurons_increase": 2,
-    "rnn": "SimpleRNN",
+    "rnn": "GRU",
     "drop": 0.0,
-    "rnn_layers": 1,
+    "rnn_layers": 2,
     "dense_layers": 1,
     "activation": "tanh",
     "activation_r": "hard_sigmoid",

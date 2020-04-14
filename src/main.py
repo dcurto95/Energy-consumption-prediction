@@ -50,12 +50,20 @@ if __name__ == '__main__':
     copyfile(argv[1], '../logs/' + config['test_name'] + "/config.json")
 
     preprocessing.fix_missing_values(dataframe)
+    dataframe['Datetime'] = pd.to_datetime(dataframe['Datetime'])
+    # plot.plot_consumption(dataframe)
+    dataframe.sort_values(by="Datetime", inplace=True)
+    # plot.plot_consumption(dataframe)
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
 
     scaler, data = preprocessing.normalize_minmax(dataframe)
 
-    for loop, i in enumerate(
-            np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])):
+    if type(config['tunning_parameter']['step']) is list:
+        parameter_steps = config['tunning_parameter']['step']
+    else:
+        parameter_steps = np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])
+
+    for loop, i in enumerate(parameter_steps):
         if i == 0:
             i = 1
 
@@ -135,19 +143,25 @@ if __name__ == '__main__':
                                 ['Truth', 'Prediction'],
                                 config['tunning_parameter']['name'] + "=" + str(i) + "-pred_vs_truth",
                                 folder=config['test_name'],
-                                title="Prediction vs. Truth", figsize=10)
+                                title="Prediction vs. Truth", figsize=(10, 10))
         plot.draw_history(history, config['test_name'], config['tunning_parameter']['name'] + "=" + str(i))
 
-    print("\n\n", errors)
-    print("Best:\nNum. Layers:", best_config, "\n", errors[best_config - 1])
+        print("\n\n", errors)
+        print("Best:\nNum. Layers:", best_config, "\n", errors[best_config - 1])
 
-    x_values = np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])
-    x_values[0] = 1
+        if type(config['tunning_parameter']['step']) is list:
+            x_values = config['tunning_parameter']['step']
+        else:
+            x_values = np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])
+            x_values[0] = 1
 
-    errors = np.asarray(errors)
-    plot.multiple_line_plot([x_values, x_values],
-                            [errors[:, 0], errors[:, 1]],
-                            ['MSE', 'R2'],
-                            config['test_name'] + "/Parameter=" + config['tunning_parameter']['name'] + "-Loss",
-                            title="Parameters configuration Loss",
-                            figsize=10)
+        # x_values = np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])
+
+        np_errors = np.asarray(errors)
+        plot.line_subplot([x_values[:loop + 1], x_values[:loop + 1], x_values[:loop + 1]],
+                          [np_errors[:, 0], np_errors[:, 1], np_errors[:, 2]],
+                          ['MSE', 'R2', 'Execution time'],
+                          (1, 3),
+                          config['test_name'] + "/Parameter=" + config['tunning_parameter']['name'] + "-Loss",
+                          title="Metrics for parameter " + config['tunning_parameter']['name'],
+                          figsize=(20, 10))
