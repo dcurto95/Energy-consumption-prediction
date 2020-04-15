@@ -91,12 +91,6 @@ def plot_average_consumption(dataframe, column):
 
     plt.show()
 
-def boxplot_hour_consumption(dataframe):
-    _= dataframe.pivot_table(index=dataframe['Hour'],
-                       columns='Weekday',
-                       values='PJME_MW',
-                       aggfunc='sum').plot(figsize=(15, 4),
-                                           title='PJM East Region - Daily Trend')
 
 def consumption_distribution_quarter(df):
     Q1 = df[df["Quarter"] == 1]
@@ -222,8 +216,6 @@ def plot_dataset(df):
 
 def data_discovery(dataframe):
     consumption_distribution_quarter(dataframe)
-    boxplot_hour_consumption(dataframe)
-    consumption_distribution_hour(dataframe)
     plot_consumption_distribution(dataframe)
     plot_hourly_consumption(dataframe)
     plot_daily_consumption(dataframe)
