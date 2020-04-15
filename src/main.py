@@ -54,7 +54,7 @@ if __name__ == '__main__':
     dataframe.sort_values(by="Datetime", inplace=True)
 
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
-    plot.data_discovery(dataframe)
+    #plot.data_discovery(dataframe)
 
     scaler, data = preprocessing.normalize_minmax(dataframe)
 
@@ -135,19 +135,19 @@ if __name__ == '__main__':
         errors.append((score, r2test, time.time() - since))
 
         # TODO: Put this code into a function
-        gt = pd.Series(test_y.tolist())
-        prediction_t = pd.Series(prediction.tolist())
-        columns_labels = list(dataframe.columns)[1:]
-        consumption_test = pd.DataFrame(data=test_without_norm, columns=columns_labels)
-        consumption_test["PredictionMW"] = prediction_t
-        consumption_test["RealMW"] = gt
-        consumption_test["Error"] = np.abs(test_y - prediction)
-
-        error = consumption_test
-        error = error.groupby(['Year', 'Month', 'Day'])['Error'].agg(['mean'])
-        worst_days = error.sort_values(by='mean', ascending=False)
-        worst_day = worst_days.iloc[0]
-        best_day = worst_days.iloc[-1]
+        # gt = pd.Series(test_y.tolist())
+        # prediction_t = pd.Series(prediction.tolist())
+        # columns_labels = list(dataframe.columns)[1:]
+        # consumption_test = pd.DataFrame(data=test_without_norm, columns=columns_labels)
+        # consumption_test["PredictionMW"] = prediction_t
+        # consumption_test["RealMW"] = gt
+        # consumption_test["Error"] = np.abs(test_y - prediction)
+        #
+        # error = consumption_test
+        # error = error.groupby(['Year', 'Month', 'Day'])['Error'].agg(['mean'])
+        # worst_days = error.sort_values(by='mean', ascending=False)
+        # worst_day = worst_days.iloc[0]
+        # best_day = worst_days.iloc[-1]
 
         # plot.plot_best_worst_day(best_day, worst_day, consumption_test)
 
