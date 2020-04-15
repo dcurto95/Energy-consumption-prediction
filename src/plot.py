@@ -2,8 +2,6 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import  seaborn as sns
 import numpy as np
-import statsmodels.api as sm
-from datetime import  datetime
 from sklearn.model_selection import train_test_split
 
 
@@ -214,17 +212,6 @@ def plot_consumption_distribution(df):
     sns.distplot(df["PJME_MW"], hist=False, color="g", kde_kws={"shade": True})
     plt.show()
 
-def plot_trend_consumption(df):
-    df.index = df["Datetime"]
-    df_consumption = df.drop(columns=["Datetime"])
-    start_date = datetime(2003,1,1)
-    end_date = datetime(2006, 1, 1)
-    #df_consumption = df_consumption[(start_date <= df_consumption.index) & (df_consumption.index <= end_date)]
-    decomposition = sm.tsa.seasonal_decompose(df_consumption, model='additive', freq=52)
-    plt.figure(figsize=(17, 7))
-    plt.plot(df_consumption.index, df_consumption['PJME_MW'], c='blue')
-    plt.plot(decomposition.trend.index, decomposition.trend, c='red')
-    plt.show()
 
 def plot_dataset(df):
     df.index = df["Datetime"]
