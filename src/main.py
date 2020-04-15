@@ -56,6 +56,8 @@ if __name__ == '__main__':
     # plot.plot_consumption(dataframe)
     dataframe = preprocessing.extract_features_from_datetime(dataframe)
 
+    # plot.data_discovery(dataframe)
+
     scaler, data = preprocessing.normalize_minmax(dataframe)
 
     X, y = preprocessing.sequence_data(data, config['arch']['window_size'])
@@ -107,7 +109,6 @@ if __name__ == '__main__':
         rnn.compile(model, optimizer, lr)
 
         history = rnn.fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y, verbose=1)
-        # history = rnn.fit_no_validation(model, train_x, train_y, batch_size, epochs, verbose=1)
 
         score = rnn.evaluate(model, test_x, test_y, batch_size)
 
@@ -135,7 +136,22 @@ if __name__ == '__main__':
         print("\nExecution time:", time.time() - since, "s")
         errors.append((score, r2test, time.time() - since))
 
-        # plot.plot_prediction(prediction, test_y_without_norm)
+        # TODO: Put this code into a function
+        gt = pd.Series(test_y.tolist())
+        prediction_t = pd.Series(prediction.tolist())
+        columns_labels = list(dataframe.columns)[1:]
+        consumption_test = pd.DataFrame(data=test_without_norm, columns=columns_labels)
+        consumption_test["PredictionMW"] = prediction_t
+        consumption_test["RealMW"] = gt
+        consumption_test["Error"] = np.abs(test_y - prediction)
+
+        error = consumption_test
+        error = error.groupby(['Year', 'Month', 'Day'])['Error'].agg(['mean'])
+        worst_days = error.sort_values(by='mean', ascending=False)
+        worst_day = worst_days.iloc[0]
+        best_day = worst_days.iloc[-1]
+
+        # plot.plot_best_worst_day(best_day, worst_day, consumption_test)
 
         x_values = test_without_norm.astype(np.intc)
         x_values = [str(datetime.datetime(year=x[3], month=x[2], day=x[1], hour=x[0])) for x in x_values]
