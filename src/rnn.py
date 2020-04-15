@@ -15,17 +15,21 @@ def create_model(input_shape, neurons, neurons_increase, drop, rnn_layers, dense
 
     model = Sequential()
     if rnn_layers == 1:
-        model.add(RNN(neurons, input_shape=input_shape, recurrent_dropout=drop, activation=activation))
+        model.add(RNN(int(neurons), input_shape=input_shape, recurrent_dropout=drop, activation=activation,
+                      recurrent_activation=activation_r))
     else:
         model.add(
-            RNN(neurons, input_shape=input_shape, recurrent_dropout=drop, activation=activation, return_sequences=True))
+            RNN(int(neurons), input_shape=input_shape, recurrent_dropout=drop, activation=activation,
+                recurrent_activation=activation_r, return_sequences=True))
         i = 1
         for i in range(1, rnn_layers - 1):
-            model.add(RNN(neurons * i * neurons_increase, recurrent_dropout=drop, activation=activation,
+            model.add(RNN(int(neurons * i * neurons_increase), recurrent_dropout=drop, activation=activation,
+                          recurrent_activation=activation_r,
                           return_sequences=True))
-        model.add(RNN(neurons * i + 1 * neurons_increase, recurrent_dropout=drop, activation=activation))
+        model.add(RNN(int(neurons * i + 1 * neurons_increase), recurrent_dropout=drop, activation=activation,
+                      recurrent_activation=activation_r))
     for i in range(1, dense_layers - 1):
-        model.add(Dense((neurons * (dense_layers - 1 - i)) // neurons_increase))
+        model.add(Dense(int((neurons * (dense_layers - 1 - i)) // neurons_increase)))
 
     model.add(Dense(1))
     model.summary()
@@ -65,6 +69,7 @@ def fit(model, train_x, train_y, batch_size, epochs, validation_x, validation_y,
                      epochs=epochs,
                      validation_data=(validation_x, validation_y),
                      verbose=verbose)
+
 
 def fit_no_validation(model, train_x, train_y, batch_size, epochs, verbose=0):
     return model.fit(train_x, train_y, batch_size=batch_size,

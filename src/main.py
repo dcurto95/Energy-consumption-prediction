@@ -58,32 +58,34 @@ if __name__ == '__main__':
 
     scaler, data = preprocessing.normalize_minmax(dataframe)
 
+    X, y = preprocessing.sequence_data(data, config['arch']['window_size'])
+    # test_without_norm = dataframe.to_numpy()[int((dataframe.shape[0] - config['arch']['window_size']) * 0.9):, 1:]
+
+    _, a, _, b = train_test_split(dataframe.to_numpy()[config['arch']['window_size']:, 1:],
+                                  dataframe.to_numpy()[config['arch']['window_size']:, 0], test_size=0.2,
+                                  shuffle=False)
+    _, test_without_norm, _, _ = train_test_split(a, b, test_size=0.5, shuffle=False)
+
+    train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.2, shuffle=False)
+    validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
+
+    print('X_train.shape = ', train_x.shape)
+    print('y_train.shape = ', train_y.shape)
+    print('X_test.shape = ', test_x.shape)
+    print('y_test.shape = ', test_y.shape)
+
     if type(config['tunning_parameter']['step']) is list:
         parameter_steps = config['tunning_parameter']['step']
     else:
         parameter_steps = np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])
+        if config['tunning_parameter']['step'] == 1:
+            parameter_steps = np.delete(parameter_steps, 0)
 
     for loop, i in enumerate(parameter_steps):
         if i == 0:
             i = 1
 
         config[config['tunning_parameter']['from']][config['tunning_parameter']['name']] = i
-
-        X, y = preprocessing.sequence_data(data, config['arch']['window_size'])
-        # test_without_norm = dataframe.to_numpy()[int((dataframe.shape[0] - config['arch']['window_size']) * 0.9):, 1:]
-
-        _, a, _, b = train_test_split(dataframe.to_numpy()[config['arch']['window_size']:, 1:],
-                                      dataframe.to_numpy()[config['arch']['window_size']:, 0], test_size=0.2,
-                                      shuffle=False)
-        _, test_without_norm, _, _ = train_test_split(a, b, test_size=0.5, shuffle=False)
-
-        train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.2, shuffle=False)
-        validation_x, test_x, validation_y, test_y = train_test_split(test_x, test_y, test_size=0.5, shuffle=False)
-
-        print('X_train.shape = ', train_x.shape)
-        print('y_train.shape = ', train_y.shape)
-        print('X_test.shape = ', test_x.shape)
-        print('y_test.shape = ', test_y.shape)
 
         since = time.time()
 
@@ -122,24 +124,24 @@ if __name__ == '__main__':
         print("Predicted:", prediction)
 
         prediction = preprocessing.inverse_minmax(prediction, scaler)
-        test_y = preprocessing.inverse_minmax(test_y, scaler)
-        print('Real MSE =', mean_squared_error(test_y, prediction))
+        test_y_without_norm = preprocessing.inverse_minmax(test_y, scaler)
+        print('Real MSE =', mean_squared_error(test_y_without_norm, prediction))
 
-        r2test = r2_score(test_y, prediction)
-        r2pers = r2_score(test_y[ahead:], test_y[0:-ahead])
+        r2test = r2_score(test_y_without_norm, prediction)
+        r2pers = r2_score(test_y_without_norm[ahead:], test_y_without_norm[0:-ahead])
         print('R2 test= ', r2test)
         print('R2 test persistence =', r2pers)
 
         print("\nExecution time:", time.time() - since, "s")
         errors.append((score, r2test, time.time() - since))
 
-        # plot.plot_prediction(prediction, test_y)
+        # plot.plot_prediction(prediction, test_y_without_norm)
 
         x_values = test_without_norm.astype(np.intc)
         x_values = [str(datetime.datetime(year=x[3], month=x[2], day=x[1], hour=x[0])) for x in x_values]
 
         plot.multiple_line_plot([x_values, x_values],
-                                [test_y, prediction],
+                                [test_y_without_norm, prediction],
                                 ['Truth', 'Prediction'],
                                 config['tunning_parameter']['name'] + "=" + str(i) + "-pred_vs_truth",
                                 folder=config['test_name'],
@@ -152,8 +154,7 @@ if __name__ == '__main__':
         if type(config['tunning_parameter']['step']) is list:
             x_values = config['tunning_parameter']['step']
         else:
-            x_values = np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])
-            x_values[0] = 1
+            x_values = parameter_steps
 
         # x_values = np.arange(0, config['tunning_parameter']['max_value'], config['tunning_parameter']['step'])
 

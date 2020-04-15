@@ -1,10 +1,10 @@
 {
-  "test_name": "Increasing_GRU_Layers",
+  "test_name": "test",
   "tunning_parameter": {
     "from": "arch",
-    "name": "rnn_layers",
-    "max_value": 20,
-    "step": 1
+    "name": "neurons",
+    "max_value": 32,
+    "step": [32,32,32,32,32]
   },
   "arch": {
     "neurons": 32,
@@ -15,7 +15,7 @@
     "dense_layers": 1,
     "activation": "tanh",
     "activation_r": "hard_sigmoid",
-    "window_size": 2
+    "window_size": 8
   },
   "training": {
     "batch": 1000,
