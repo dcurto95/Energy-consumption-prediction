@@ -51,12 +51,10 @@ if __name__ == '__main__':
 
     preprocessing.fix_missing_values(dataframe)
     dataframe['Datetime'] = pd.to_datetime(dataframe['Datetime'])
-    # plot.plot_consumption(dataframe)
     dataframe.sort_values(by="Datetime", inplace=True)
-    # plot.plot_consumption(dataframe)
-    dataframe = preprocessing.extract_features_from_datetime(dataframe)
 
-    #plot.data_discovery(dataframe)
+    dataframe = preprocessing.extract_features_from_datetime(dataframe)
+    plot.data_discovery(dataframe)
 
     scaler, data = preprocessing.normalize_minmax(dataframe)
 

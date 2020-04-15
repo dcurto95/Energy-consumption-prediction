@@ -2,6 +2,9 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import  seaborn as sns
 import numpy as np
+import statsmodels.api as sm
+from datetime import  datetime
+from sklearn.model_selection import train_test_split
 
 
 def multiple_line_plot(x_list, y_list, labels, file_name, folder='.', title='', figsize=(20, 20)):
@@ -45,12 +48,12 @@ def draw_history(history, folder, test_name):
     plt.close('all')
 
 
-def plot_consumption(dataframe):
-    dataframe.plot(figsize=(16, 4), legend=True)
-
-    plt.title('DOM hourly power consumption data ')
-
-    plt.show()
+def plot_consumption(df):
+    df.index = df["Datetime"]
+    fig, ax = plt.subplots(figsize=(15, 5))
+    plt.plot(df.index, df["PJME_MW"])
+    plt.title("PJM East Coast Energy consumption")
+    plt.ylabel("Consumed energy (MW)")
 
 
 def plot_prediction(gt, pred):
@@ -97,7 +100,6 @@ def boxplot_hour_consumption(dataframe):
                        aggfunc='sum').plot(figsize=(15, 4),
                                            title='PJM East Region - Daily Trend')
 
-
 def consumption_distribution_quarter(df):
     Q1 = df[df["Quarter"] == 1]
     Q2 = df[df["Quarter"] == 2]
@@ -106,10 +108,12 @@ def consumption_distribution_quarter(df):
 
     fig, axes = plt.subplots(2, 2, figsize=(17, 7), sharex=True, sharey=True)
 
-    sns.distplot(Q1["PJME_MW"], color="skyblue", ax=axes[0, 0]).set_title("Quarter 1 - Consumption")
-    sns.distplot(Q2["PJME_MW"], color="red", ax=axes[0, 1]).set_title("Quarter 2 - Consumption")
-    sns.distplot(Q3["PJME_MW"], color="green", ax=axes[1, 0]).set_title("Quarter 3 - Consumption")
-    sns.distplot(Q4["PJME_MW"], color="gray", ax=axes[1, 1]).set_title("Quarter 4 - Consumption")
+    sns.distplot(Q1["PJME_MW"], color="blue", ax=axes[0, 0]).set_title("Quarter 1")
+    sns.distplot(Q2["PJME_MW"], color="green", ax=axes[0, 1]).set_title("Quarter 2")
+    sns.distplot(Q3["PJME_MW"], color="orange", ax=axes[1, 0]).set_title("Quarter 3")
+    sns.distplot(Q4["PJME_MW"], color="brown", ax=axes[1, 1]).set_title("Quarter 4")
+
+    fig.suptitle("Energy consumption distribution by Quarter", fontsize=20)
 
 
 def consumption_distribution_hour(df):
@@ -152,10 +156,89 @@ def plot_best_worst_day(best,worst, df):
 def extract_year_month_day(value):
     return value[0], value[1], value[2]
 
+def plot_train_val_test(df):
+
+    df.index = df["Datetime"]
+    df = df.drop(columns=["Datetime"])
+    train_x, test_x = train_test_split(df, test_size=0.2, shuffle=False)
+    validation_x, test_x= train_test_split(test_x, test_size=0.5, shuffle=False)
+
+    joined = test_x \
+        .rename(columns={'PJME_MW': 'TEST SET'}) \
+        .join(validation_x.rename(columns={'PJME_MW': 'VALIDATION SET'}), how='outer')
+
+    joined = joined \
+        .join(train_x.rename(columns={'PJME_MW': 'TRAIN SET'}), how='outer')\
+        .plot(figsize=(15, 5), title='PJM East', style='.')
+
+def plot_hourly_consumption(df):
+    mean_per_hour = df.groupby("Hour")["PJME_MW"].agg(["mean"])
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    ax.plot(mean_per_hour.index, mean_per_hour["mean"], "k--", color="blue", lw=3)
+    ax.fill_between(mean_per_hour.index, 0, mean_per_hour["mean"], color="blue", alpha=.3)
+
+    upper_limit = mean_per_hour["mean"].max() + mean_per_hour["mean"].max() / 20
+    lower_limit = mean_per_hour["mean"].min()
+    ax.set_xticks(np.arange(len(mean_per_hour.index)))
+    plt.ylim(top=upper_limit, bottom=lower_limit)
+    plt.grid(True)
+    plt.xlabel("Hour")
+    plt.ylabel("Mean consumption (MW)")
+
+    plt.title("Average consumption by hour")
+
+def plot_daily_consumption(df):
+    mean_per_day = df.groupby("Weekday")["PJME_MW"].agg(["mean"])
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    ax.plot(mean_per_day.index, mean_per_day["mean"], "k--", color="blue", lw=3)
+    ax.fill_between(mean_per_day.index, 0, mean_per_day["mean"], color="blue", alpha=.3)
+
+    upper_limit = mean_per_day["mean"].max() + mean_per_day["mean"].max() / 20
+    lower_limit = mean_per_day["mean"].min()
+    ax.set_xticks(np.arange(len(mean_per_day.index)))
+    ax.set_xticklabels(["Monday", "Tuesday", "Wednesday", "Thursday","Friday", "Saturday", "Sunday"])
+    plt.ylim(top=upper_limit, bottom=lower_limit)
+    plt.grid(True)
+    plt.xlabel("Day of week")
+    plt.ylabel("Mean consumption (MW)")
+
+    plt.title("Average consumption by day of week")
+
+
+def plot_consumption_distribution(df):
+    sns.distplot(df["PJME_MW"], bins=20, hist=True)
+    sns.distplot(df["PJME_MW"], hist=False, color="g", kde_kws={"shade": True})
+    plt.show()
+
+def plot_trend_consumption(df):
+    df.index = df["Datetime"]
+    df_consumption = df.drop(columns=["Datetime"])
+    start_date = datetime(2003,1,1)
+    end_date = datetime(2006, 1, 1)
+    #df_consumption = df_consumption[(start_date <= df_consumption.index) & (df_consumption.index <= end_date)]
+    decomposition = sm.tsa.seasonal_decompose(df_consumption, model='additive', freq=52)
+    plt.figure(figsize=(17, 7))
+    plt.plot(df_consumption.index, df_consumption['PJME_MW'], c='blue')
+    plt.plot(decomposition.trend.index, decomposition.trend, c='red')
+    plt.show()
+
+def plot_dataset(df):
+    df.index = df["Datetime"]
+    fig, ax = plt.subplots(figsize=(15, 5))
+    plt.plot(df.index, df["PJME_MW"])
+    plt.title("PJM East Coast Energy consumption")
+    plt.ylabel("Consumed energy (MW)")
 
 def data_discovery(dataframe):
     consumption_distribution_quarter(dataframe)
     boxplot_hour_consumption(dataframe)
     consumption_distribution_hour(dataframe)
+    plot_consumption_distribution(dataframe)
+    plot_hourly_consumption(dataframe)
+    plot_daily_consumption(dataframe)
     plt.show()
 
