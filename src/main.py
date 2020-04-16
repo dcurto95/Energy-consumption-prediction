@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 import plot
 import preprocessing
 import rnn
+import metrics
 
 
 def load_config_file(nfile, abspath=False):
@@ -131,25 +132,31 @@ if __name__ == '__main__':
         print('R2 test= ', r2test)
         print('R2 test persistence =', r2pers)
 
+        metrics.compute_print_scores(prediction,test_y_without_norm)
+
         print("\nExecution time:", time.time() - since, "s")
         errors.append((score, r2test, time.time() - since))
 
         # TODO: Put this code into a function
-        # gt = pd.Series(test_y.tolist())
-        # prediction_t = pd.Series(prediction.tolist())
-        # columns_labels = list(dataframe.columns)[1:]
-        # consumption_test = pd.DataFrame(data=test_without_norm, columns=columns_labels)
-        # consumption_test["PredictionMW"] = prediction_t
-        # consumption_test["RealMW"] = gt
-        # consumption_test["Error"] = np.abs(test_y - prediction)
-        #
-        # error = consumption_test
-        # error = error.groupby(['Year', 'Month', 'Day'])['Error'].agg(['mean'])
-        # worst_days = error.sort_values(by='mean', ascending=False)
-        # worst_day = worst_days.iloc[0]
-        # best_day = worst_days.iloc[-1]
+        gt = pd.Series(test_y.tolist())
+        prediction_t = pd.Series(prediction.tolist())
+        columns_labels = list(dataframe.columns)[1:]
+        consumption_test = pd.DataFrame(data=test_without_norm, columns=columns_labels)
+        consumption_test["PredictionMW"] = prediction_t
+        consumption_test["RealMW"] = gt
+        consumption_test["Error"] = np.abs(test_y - prediction)
 
-        # plot.plot_best_worst_day(best_day, worst_day, consumption_test)
+        error = consumption_test
+        error = error.groupby(['Year', 'Month', 'Day'])['Error'].agg(['mean'])
+        worst_days = error.sort_values(by='mean', ascending=False)
+        print("Worst days")
+        print(worst_days.iloc[0:10])
+        print("Best days")
+        print(worst_days.iloc[-10:])
+        worst_day = worst_days.iloc[0]
+        best_day = worst_days.iloc[-1]
+
+        plot.plot_best_worst_day(best_day, worst_day, consumption_test)
 
         x_values = test_without_norm.astype(np.intc)
         x_values = [str(datetime.datetime(year=x[3], month=x[2], day=x[1], hour=x[0])) for x in x_values]
